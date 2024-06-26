@@ -68,8 +68,11 @@ public class LogRecordInterceptor extends LogRecordValueParser implements Method
         Collection<LogRecordOps> operations = new ArrayList<>();
         Map<String, String> functionNameAndReturnMap = new HashMap<>();
         try {
+            // 获取 该类 对应的 method方法上的所有注解信息
             operations = logRecordOperationSource.computeLogRecordOperations(method, targetClass);
+            // 把所有的spel表达式涉及的字段都读取出来
             List<String> spElTemplates = getBeforeExecuteFunctionTemplate(operations);
+            // invoker.proceed() 执行前，进行函数+spel解析
             functionNameAndReturnMap = processBeforeExecuteFunctionTemplate(spElTemplates, targetClass, method, args);
         } catch (Exception e) {
             log.error("log record parse before function exception", e);
@@ -89,6 +92,7 @@ public class LogRecordInterceptor extends LogRecordValueParser implements Method
         stopWatch.start(MONITOR_TASK_AFTER_EXECUTE);
         try {
             if (!CollectionUtils.isEmpty(operations)) {
+                // 内部包含 invoker.proceed() 执行后，进行函数+spel解析
                 recordExecute(methodExecuteResult, functionNameAndReturnMap, operations);
             }
         } catch (Exception t) {
@@ -131,6 +135,7 @@ public class LogRecordInterceptor extends LogRecordValueParser implements Method
                     continue;
                 }
                 if (exitsCondition(methodExecuteResult, functionNameAndReturnMap, operation)) continue;
+                // 失败则记录失败日志，成功则记录成功日志
                 if (!methodExecuteResult.isSuccess()) {
                     failRecordExecute(methodExecuteResult, functionNameAndReturnMap, operation);
                 } else {
@@ -163,8 +168,11 @@ public class LogRecordInterceptor extends LogRecordValueParser implements Method
             // 没有日志内容则忽略
             return;
         }
+        // 获取所有 spElTemplates
         List<String> spElTemplates = getSpElTemplates(operation, action);
+        // 获取操作人id
         String operatorIdFromService = getOperatorIdFromServiceAndPutTemplate(operation, spElTemplates);
+        // spElTemplate 作为key，解析出的值作为 value
         Map<String, String> expressionValues = processTemplate(spElTemplates, methodExecuteResult, functionNameAndReturnMap);
         saveLog(methodExecuteResult.getMethod(), !flag, operation, operatorIdFromService, action, expressionValues);
     }

@@ -25,6 +25,9 @@ public class LogRecordOperationSource {
      */
     private static final Map<Method, Method> INTERFACE_METHOD_CACHE = new ConcurrentReferenceHashMap<>(256);
 
+    /**
+     * 获取 该类 对应的 method方法上的所有注解信息
+     */
     public Collection<LogRecordOps> computeLogRecordOperations(Method method, Class<?> targetClass) {
         // Don't allow no-public methods as required.
         if (!Modifier.isPublic(method.getModifiers())) {

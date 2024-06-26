@@ -109,9 +109,12 @@ public class LogRecordValueParser implements BeanFactoryAware {
 
     public Map<String, String> processBeforeExecuteFunctionTemplate(Collection<String> templates, Class<?> targetClass, Method method, Object[] args) {
         Map<String, String> functionNameAndReturnValueMap = new HashMap<>();
+
+        // 将函数有关的所有参数设置到 EvaluationContext 中
         EvaluationContext evaluationContext = expressionEvaluator.createEvaluationContext(method, args, targetClass, null, null, beanFactory);
 
         for (String expressionTemplate : templates) {
+            // 根据是否存在{快速判断是否是表达式
             if (expressionTemplate.contains("{")) {
                 Matcher matcher = pattern.matcher(expressionTemplate);
                 while (matcher.find()) {
@@ -121,10 +124,14 @@ public class LogRecordValueParser implements BeanFactoryAware {
                     }
                     AnnotatedElementKey annotatedElementKey = new AnnotatedElementKey(method, targetClass);
                     String functionName = matcher.group(1);
+                    // 如果函数是之前启动
                     if (logFunctionParser.beforeFunction(functionName)) {
+                        // 获取spel表达式解析后的结果
                         Object value = expressionEvaluator.parseExpression(expression, annotatedElementKey, evaluationContext);
+                        // 调用函数，并获取返回结果
                         String functionReturnValue = logFunctionParser.getFunctionReturnValue(null, value, expression, functionName);
                         String functionCallInstanceKey = logFunctionParser.getFunctionCallInstanceKey(functionName, expression);
+                        // 保存函数运算结果
                         functionNameAndReturnValueMap.put(functionCallInstanceKey, functionReturnValue);
                     }
                 }
